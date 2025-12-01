@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.nexback.core.engine import NBackEngine, ResponseType, StimulusType
+from src.nexback.core.storage import Storage
 from src.nexback.ui.grid_widget import GridWidget
 from src.nexback.utils.config import GameConfig
 
@@ -26,6 +27,7 @@ class MainWindow(QMainWindow):
         # Config & Engine
         self.config = GameConfig()
         self.engine = NBackEngine(self.config)
+        self.storage = Storage()
         self.speech = QTextToSpeech()
 
         # UI Setup
@@ -51,12 +53,31 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.grid, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Feedback Area
-        self.lbl_feedback = QLabel(
+        self.lbl_instructions = QLabel(
             "Press 'A' for Position Match | Press 'L' for Audio Match"
         )
-        self.lbl_feedback.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_feedback.setStyleSheet("font-size: 14px; color: #555;")
-        layout.addWidget(self.lbl_feedback)
+        self.lbl_instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_instructions.setStyleSheet("font-size: 14px; color: #888;")
+        layout.addWidget(self.lbl_instructions)
+
+        # Status Area
+        status_layout = QHBoxLayout()
+
+        self.lbl_pos_status = QLabel("Position: Waiting")
+        self.lbl_pos_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_pos_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+
+        self.lbl_audio_status = QLabel("Audio: Waiting")
+        self.lbl_audio_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_audio_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+
+        status_layout.addWidget(self.lbl_pos_status)
+        status_layout.addWidget(self.lbl_audio_status)
+        layout.addLayout(status_layout)
 
         # Controls
         controls_layout = QHBoxLayout()
@@ -90,15 +111,21 @@ class MainWindow(QMainWindow):
 
         if a0.key() == Qt.Key.Key_A:
             self.engine.submit_response(StimulusType.POSITION)
-            self._flash_feedback("Position Checked", "#3498db")
         elif a0.key() == Qt.Key.Key_L:
             self.engine.submit_response(StimulusType.AUDIO)
-            self._flash_feedback("Audio Checked", "#e74c3c")
 
     def start_game(self):
         self.btn_start.setEnabled(False)
         self.btn_stop.setEnabled(True)
         self.lbl_score.setText("Score: 0")
+        self.lbl_pos_status.setText("Position: Waiting")
+        self.lbl_pos_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+        self.lbl_audio_status.setText("Audio: Waiting")
+        self.lbl_audio_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
         self.progress.setValue(0)
         self.engine.start_session()
         self.grid.setFocus()
@@ -108,6 +135,14 @@ class MainWindow(QMainWindow):
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
         self.grid.clear()
+        self.lbl_pos_status.setText("Position: Waiting")
+        self.lbl_pos_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+        self.lbl_audio_status.setText("Audio: Waiting")
+        self.lbl_audio_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
 
     def on_stimulus(self, pos, audio_char):
         # Visual
@@ -121,25 +156,21 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(self.config.stimulus_duration_ms, self.grid.clear)
 
     def on_feedback(self, stim_type, response_type):
-        msg = f"{stim_type.name}: {response_type.name}"
-        color = "#2ecc71" if response_type == ResponseType.HIT else "#e74c3c"
-        if response_type == ResponseType.FALSE_ALARM:
-            color = "#e67e22"  # Orange
-        elif response_type == ResponseType.MISS:
-            color = "#95a5a6"  # Gray
+        is_correct = response_type in [ResponseType.HIT, ResponseType.REJECTION]
 
-        self._flash_feedback(msg, color)
+        text = "Correct" if is_correct else "Incorrect"
+        # Green for correct, Red for incorrect.
+        color = "#2ecc71" if is_correct else "#e74c3c"
 
-    def _flash_feedback(self, text, color):
-        self.lbl_feedback.setText(text)
-        self.lbl_feedback.setStyleSheet(
-            f"font-size: 16px; font-weight: bold; color: {color};"
+        label = (
+            self.lbl_pos_status
+            if stim_type == StimulusType.POSITION
+            else self.lbl_audio_status
         )
-        # Reset after 1 sec
-        QTimer.singleShot(
-            1000,
-            lambda: self.lbl_feedback.setStyleSheet("font-size: 14px; color: #555;"),
-        )
+        prefix = "Position" if stim_type == StimulusType.POSITION else "Audio"
+
+        label.setText(f"{prefix}: {text}")
+        label.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {color};")
 
     def on_score(self, score, total):
         self.lbl_score.setText(f"Score: {score}")
@@ -148,14 +179,28 @@ class MainWindow(QMainWindow):
         self.progress.setMaximum(total)
         self.progress.setValue(current)
 
-    def on_finished(self, stats):
+    def on_finished(self, result):
         self.stop_game()
+
+        stats = result["stats"]
+        final_score = result["final_score"]
+        promotion = result["promotion"]
+        demotion = result["demotion"]
+        new_level = result["n_level"]
 
         # Calculate accuracy
         pos_stats = stats[StimulusType.POSITION]
         audio_stats = stats[StimulusType.AUDIO]
 
         msg = "Session Finished!\n\n"
+        msg += f"Final Score: {final_score:.2%}\n"
+        if promotion:
+            msg += f"Result: PROMOTED to N-Level {new_level}!\n\n"
+        elif demotion:
+            msg += f"Result: DEMOTED to N-Level {new_level}...\n\n"
+        else:
+            msg += f"Result: Level Maintained at {new_level}\n\n"
+
         msg += "Position:\n"
         msg += f"  Hits: {pos_stats['hit']}\n"
         msg += f"  Misses: {pos_stats['miss']}\n"
@@ -166,3 +211,9 @@ class MainWindow(QMainWindow):
         msg += f"  False Alarms: {audio_stats['false_alarm']}"
 
         QMessageBox.information(self, "Results", msg)
+
+        # Update level label
+        self.lbl_level.setText(f"N-Level: {self.config.n_level}")
+
+        # Save history
+        self.storage.save_session(result, self.config)
