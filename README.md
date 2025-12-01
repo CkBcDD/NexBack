@@ -50,7 +50,14 @@ This project recommends using [uv](https://github.com/astral-sh/uv) for dependen
 
 ### Install with pip (traditional)
 
-1. Create and activate a virtual environment (optional but recommended).
+1. Clone the repo:
+
+    ```bash
+    git clone https://github.com/CkBcDD/NexBack.git
+    cd NexBack
+    ```
+
+2. Create and activate a virtual environment (optional but recommended).
 
     ```bash
     python -m venv .venv
@@ -58,7 +65,7 @@ This project recommends using [uv](https://github.com/astral-sh/uv) for dependen
     python3 -m venv .venv
     ```
 
-2. Install dependencies:
+3. Install dependencies:
 
     ```bash
     pip install .

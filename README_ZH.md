@@ -13,7 +13,7 @@ NexBack 是一款基于科学验证的 **Dual N-Back** 认知训练范式构建�
 - **Dual N-Back 训练**：同时追踪空间位置（3x3 网格）和听觉信号（字母朗读）。
 - **可配置难度**：默认 N=2，支持自定义 N-Back 级别。
 - **实时反馈系统**：
-  - 清晰的视觉指示（正确、错误、漏选）。
+  - 清晰的视觉指示（正确、错误）。
   - 实时统计 Hit（命中）、Miss（漏选）、False Alarm（误报）。
 - **评分与统计**：分别追踪视觉和听觉模态的表现。
 
@@ -50,8 +50,22 @@ NexBack 是一款基于科学验证的 **Dual N-Back** 认知训练范式构建�
 
 ### 使用 pip 安装（传统方式）
 
-1. 创建并激活虚拟环境（可选但推荐）。
-2. 安装依赖：
+1. 克隆仓库：
+
+   ```bash
+   git clone https://github.com/CkBcDD/NexBack.git
+   cd NexBack
+   ```
+
+2. 创建并激活虚拟环境（可选但推荐）。
+
+    ```bash
+    python -m venv .venv
+    # or in MacOS / Linux
+    python3 -m venv .venv
+    ```
+
+3. 安装依赖：
 
    ```bash
    pip install .
