@@ -177,6 +177,16 @@ class MainWindow(QMainWindow):
         )
 
     def on_stimulus(self, pos, audio_char):
+        # Reset feedback status
+        self.lbl_pos_status.setText("Position: Waiting")
+        self.lbl_pos_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+        self.lbl_audio_status.setText("Audio: Waiting")
+        self.lbl_audio_status.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #888;"
+        )
+
         # Visual
         self.grid.highlight(pos)
 

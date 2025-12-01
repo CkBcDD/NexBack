@@ -94,9 +94,18 @@ class NBackEngine(QObject):
             self._finish_session()
             return
 
-        # 1. Evaluate previous trial (check for Misses)
+        # 1. Evaluate previous trial (check for Misses) and show feedback
         if self.current_trial > 0:
             self._evaluate_misses()
+            # Wait for feedback to be shown before presenting next stimulus
+            QTimer.singleShot(self.config.feedback_duration_ms, self._present_stimulus)
+        else:
+            # First trial, present immediately
+            self._present_stimulus()
+
+    def _present_stimulus(self):
+        if not self.is_running:
+            return
 
         # 2. Generate new stimulus
         pos, audio = self._generate_stimulus()

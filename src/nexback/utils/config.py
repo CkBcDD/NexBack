@@ -12,6 +12,7 @@ class GameConfig:
     n_level: int = 2
     trial_duration_ms: int = 3000  # Time per trial
     stimulus_duration_ms: int = 1000  # Time stimulus is active
+    feedback_duration_ms: int = 500  # Time to show feedback before next stimulus
     total_trials: int = 20
     match_probability: float = 0.3
     interference_probability: float = (
