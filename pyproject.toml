@@ -4,4 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["pyqt6>=6.4.0"]
+dependencies = ["edge-tts>=7.2.3", "pyqt6>=6.4.0"]
+
+[project.optional-dependencies]
+scripts = [
+    "huggingface-hub>=1.1.7",
+    "piper-tts>=1.3.0",
+]

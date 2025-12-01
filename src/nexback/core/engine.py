@@ -35,6 +35,9 @@ class NBackEngine(QObject):
         self.timer = QTimer()
         self.timer.timeout.connect(self._next_trial)
 
+        # Random Number Generator
+        self.rng = random.Random(self.config.random_seed)
+
         # State for current trial
         self.current_stimulus = None
         self.user_responses = {StimulusType.POSITION: False, StimulusType.AUDIO: False}
@@ -113,20 +116,20 @@ class NBackEngine(QObject):
 
     def _generate_stimulus(self):
         n = self.config.n_level
-        force_match = random.random() < self.config.match_probability
+        force_match = self.rng.random() < self.config.match_probability
         force_interference = (
-            not force_match and random.random() < self.config.interference_probability
+            not force_match and self.rng.random() < self.config.interference_probability
         )
 
-        pos = random.randint(0, 8)
+        pos = self.rng.randint(0, 8)
         audio_pool = "ABCHKLQR"
-        audio = random.choice(audio_pool)
+        audio = self.rng.choice(audio_pool)
 
         # If we have enough history
         if len(self.history) >= n:
             if force_match:
                 # Decide which modality to match (or both)
-                match_type = random.choice(
+                match_type = self.rng.choice(
                     [StimulusType.POSITION, StimulusType.AUDIO, "BOTH"]
                 )
 
@@ -146,9 +149,9 @@ class NBackEngine(QObject):
                     offsets.append(n + 1)
 
                 if offsets:
-                    interference_n = random.choice(offsets)
+                    interference_n = self.rng.choice(offsets)
                     target_pos, target_audio = self.history[-interference_n]
-                    interference_type = random.choice(
+                    interference_type = self.rng.choice(
                         [StimulusType.POSITION, StimulusType.AUDIO]
                     )
 
@@ -162,7 +165,7 @@ class NBackEngine(QObject):
                                 p for p in range(9) if p != self.history[-n][0]
                             ]
                             if candidates:
-                                pos = random.choice(candidates)
+                                pos = self.rng.choice(candidates)
 
                     elif interference_type == StimulusType.AUDIO:
                         audio = target_audio
@@ -172,7 +175,7 @@ class NBackEngine(QObject):
                                 c for c in audio_pool if c != self.history[-n][1]
                             ]
                             if candidates:
-                                audio = random.choice(candidates)
+                                audio = self.rng.choice(candidates)
 
         return pos, audio
 

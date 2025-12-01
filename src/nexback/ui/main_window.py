@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtTextToSpeech import QTextToSpeech
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.nexback.core.audio import AudioManager
 from src.nexback.core.engine import NBackEngine, ResponseType, StimulusType
 from src.nexback.core.storage import Storage
 from src.nexback.ui.grid_widget import GridWidget
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
         self.config = GameConfig()
         self.engine = NBackEngine(self.config)
         self.storage = Storage()
-        self.speech = QTextToSpeech()
+        self.audio_manager = AudioManager()
 
         # UI Setup
         self._init_ui()
@@ -43,8 +44,13 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         self.lbl_score = QLabel("Score: 0")
         self.lbl_level = QLabel(f"N-Level: {self.config.n_level}")
+
+        self.chk_clinical = QCheckBox("Clinical Mode")
+        self.chk_clinical.toggled.connect(self.on_clinical_toggled)
+
         header_layout.addWidget(self.lbl_level)
         header_layout.addStretch()
+        header_layout.addWidget(self.chk_clinical)
         header_layout.addWidget(self.lbl_score)
         layout.addLayout(header_layout)
 
@@ -103,6 +109,22 @@ class MainWindow(QMainWindow):
         self.engine.progress_updated.connect(self.on_progress)
         self.engine.session_finished.connect(self.on_finished)
 
+    def on_clinical_toggled(self, checked):
+        self.config.is_clinical_mode = checked
+        if checked:
+            self.config.scoring_method = self.config.scoring_method.CLINICAL
+            # Set a fixed seed for reproducibility in clinical mode (demo purpose)
+            # In a real app, this might come from a pre-defined list or user ID
+            self.config.random_seed = 42
+        else:
+            self.config.scoring_method = self.config.scoring_method.STANDARD
+            self.config.random_seed = None
+
+        # Re-initialize RNG with new seed
+        import random
+
+        self.engine.rng = random.Random(self.config.random_seed)
+
     def keyPressEvent(self, a0: QKeyEvent | None):
         if not self.engine.is_running:
             return
@@ -116,7 +138,15 @@ class MainWindow(QMainWindow):
 
     def start_game(self):
         self.btn_start.setEnabled(False)
-        self.btn_stop.setEnabled(True)
+        # In Clinical Mode, we might disable the Stop button to enforce session completion
+        # But for safety/UX, we might just warn. For strict requirements:
+        if self.config.is_clinical_mode:
+            self.btn_stop.setEnabled(False)
+        else:
+            self.btn_stop.setEnabled(True)
+
+        self.chk_clinical.setEnabled(False)  # Lock mode during session
+
         self.lbl_score.setText("Score: 0")
         self.lbl_pos_status.setText("Position: Waiting")
         self.lbl_pos_status.setStyleSheet(
@@ -134,6 +164,8 @@ class MainWindow(QMainWindow):
         self.engine.stop_session()
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
+        self.chk_clinical.setEnabled(True)  # Unlock mode
+
         self.grid.clear()
         self.lbl_pos_status.setText("Position: Waiting")
         self.lbl_pos_status.setStyleSheet(
@@ -149,7 +181,7 @@ class MainWindow(QMainWindow):
         self.grid.highlight(pos)
 
         # Audio
-        self.speech.say(audio_char)
+        self.audio_manager.play(audio_char)
 
         # Clear grid after stimulus duration (e.g., 1000ms)
         # The engine handles the trial timing (3000ms), but we want the visual to disappear earlier

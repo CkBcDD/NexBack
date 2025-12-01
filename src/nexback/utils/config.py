@@ -27,3 +27,4 @@ class GameConfig:
 
     # Clinical Mode
     is_clinical_mode: bool = False
+    random_seed: int | None = None  # For reproducible sequences in clinical mode
