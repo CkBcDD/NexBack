@@ -3,7 +3,7 @@ import sys
 
 os.environ["QT_LOGGING_RULES"] = "qt.multimedia.ffmpeg=false"
 
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from src.nexback.ui.main_window import MainWindow
 

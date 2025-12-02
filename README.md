@@ -2,7 +2,7 @@
 
 NexBack is a modern desktop application built on the science-backed Dual N-Back cognitive training paradigm. It's designed to help users improve Working Memory and Fluid Intelligence.
 
-This project is inspired by the classic Brain Workshop (<http://brainworkshop.sourceforge.net/>) and aims to re-implement and extend that classic training tool using a modern tech stack (Python 3.13+, PyQt6) to provide a smoother user experience and better extensibility.
+This project is inspired by the classic Brain Workshop (<http://brainworkshop.sourceforge.net/>) and aims to re-implement and extend that classic training tool using a modern tech stack (Python 3.13+, PySide6) to provide a smoother user experience and better extensibility.
 
 > 注：本README文件以英文撰写。中文译本请参见[README_ZH.md](README_ZH.md)。
 
@@ -17,7 +17,7 @@ The current version includes the following features:
   - Real-time statistics for Hits, Misses, and False Alarms.
 - **Scoring and statistics**: Tracks performance separately for visual and auditory modalities.
 
-Planned features (from the roadmap):
+Planned features:
 
 - Multiple training modes (Single, Triple, Arithmetic, etc.)
 - Adaptive difficulty adjustment (automatically raise or lower N based on performance)
@@ -70,7 +70,7 @@ This project recommends using [uv](https://github.com/astral-sh/uv) for dependen
     ```bash
     pip install .
     # or install manually
-    pip install PyQt6
+    pip install PySide6
     ```
 
 ## 🚀 Quick Start
@@ -108,7 +108,7 @@ NexBack/
 └── src/
     └── nexback/
         ├── core/           # Core logic (engine, audio, storage)
-        ├── ui/             # UI (PyQt6)
+        ├── ui/             # UI (PySide6)
         └── utils/          # Utility functions
 ```
 

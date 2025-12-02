@@ -1,7 +1,7 @@
 import random
 from enum import Enum, auto
 
-from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+from PySide6.QtCore import QObject, QTimer, Signal
 
 from src.nexback.utils.config import GameConfig, ScoringMethod
 
@@ -20,11 +20,11 @@ class ResponseType(Enum):
 
 class NBackEngine(QObject):
     # Signals
-    stimulus_presented = pyqtSignal(int, str)  # position_index (0-8), audio_char
-    feedback_generated = pyqtSignal(StimulusType, ResponseType)
-    score_updated = pyqtSignal(int, int)  # current_score, total_possible
-    session_finished = pyqtSignal(dict)  # final stats
-    progress_updated = pyqtSignal(int, int)  # current, total
+    stimulus_presented = Signal(int, str)  # position_index (0-8), audio_char
+    feedback_generated = Signal(StimulusType, ResponseType)
+    score_updated = Signal(int, int)  # current_score, total_possible
+    session_finished = Signal(dict)  # final stats
+    progress_updated = Signal(int, int)  # current, total
 
     def __init__(self, config: GameConfig):
         super().__init__()

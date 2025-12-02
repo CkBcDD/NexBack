@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame, QGridLayout, QWidget
+from PySide6.QtWidgets import QFrame, QGridLayout, QWidget
 
 
 class GridWidget(QWidget):

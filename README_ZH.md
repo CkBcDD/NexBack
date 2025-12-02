@@ -2,7 +2,7 @@
 
 NexBack 是一款基于科学验证的 **Dual N-Back** 认知训练范式构建的现代化桌面应用程序。旨在帮助用户提升工作记忆（Working Memory）和流体智力（Fluid Intelligence）。
 
-本项目深受经典的 [Brain Workshop](http://brainworkshop.sourceforge.net/) 启发，致力于使用现代技术栈（Python 3.13+, PyQt6）重构并扩展这一经典的训练工具，提供更流畅的用户体验和更强大的扩展性。
+本项目深受经典的 [Brain Workshop](http://brainworkshop.sourceforge.net/) 启发，致力于使用现代技术栈（Python 3.13+, PySide6）重构并扩展这一经典的训练工具，提供更流畅的用户体验和更强的扩展性。
 
 > Note: This README is the Chinese translation of [README.md](README.md).
 
@@ -17,7 +17,7 @@ NexBack 是一款基于科学验证的 **Dual N-Back** 认知训练范式构建�
   - 实时统计 Hit（命中）、Miss（漏选）、False Alarm（误报）。
 - **评分与统计**：分别追踪视觉和听觉模态的表现。
 
-未来计划（基于需求文档）：
+未来计划：
 
 - 多种训练模式（Single, Triple, Arithmetic 等）。
 - 自适应难度调节（根据表现自动升降级）。
@@ -70,7 +70,7 @@ NexBack 是一款基于科学验证的 **Dual N-Back** 认知训练范式构建�
    ```bash
    pip install .
    # 或者手动安装
-   pip install PyQt6
+   pip install PySide6
    ```
 
 ## 🚀 快速开始
@@ -108,7 +108,7 @@ NexBack/
 └── src/
     └── nexback/
         ├── core/           # 核心逻辑 (引擎, 音频, 存储)
-        ├── ui/             # 用户界面 (PyQt6)
+        ├── ui/             # 用户界面 (PySide6)
         └── utils/          # 工具函数
 ```
 
