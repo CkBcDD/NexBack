@@ -4,7 +4,7 @@ version = "1.0.1"
 description = "A modern multi n-back training application"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["pyside6>=6.10.1"]
+dependencies = ["pyside6>=6.10.1", "tomli-w>=1.2.0"]
 
 [project.optional-dependencies]
 scripts = ["edge-tts>=7.2.3"]

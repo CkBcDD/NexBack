@@ -24,6 +24,7 @@ from src.nexback.core.audio import AudioManager
 from src.nexback.core.engine import NBackEngine, ResponseType, StimulusType
 from src.nexback.core.storage import Storage
 from src.nexback.ui.grid_widget import GridWidget
+from src.nexback.ui.settings_dialog import SettingsDialog
 from src.nexback.utils.config import GameConfig
 
 
@@ -125,12 +126,15 @@ class MainWindow(QMainWindow):
         self.btn_start = QPushButton("Start Session")
         self.btn_stop = QPushButton("Stop")
         self.btn_stop.setEnabled(False)
+        self.btn_settings = QPushButton("Settings")
 
         self.btn_start.clicked.connect(self.start_game)
         self.btn_stop.clicked.connect(self.stop_game)
+        self.btn_settings.clicked.connect(self.open_settings)
 
         controls_layout.addWidget(self.btn_start)
         controls_layout.addWidget(self.btn_stop)
+        controls_layout.addWidget(self.btn_settings)
         layout.addLayout(controls_layout)
 
         # Progress bar showing trial progress
@@ -186,6 +190,7 @@ class MainWindow(QMainWindow):
         else:
             self.btn_stop.setEnabled(True)
 
+        self.btn_settings.setEnabled(False)
         self.chk_clinical.setEnabled(False)
 
         # Reset UI state
@@ -202,11 +207,28 @@ class MainWindow(QMainWindow):
         self.engine.stop_session()
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
+        self.btn_settings.setEnabled(True)
         self.chk_clinical.setEnabled(True)
 
         # Reset UI state
         self.grid.clear()
         self._reset_status_labels()
+
+    def open_settings(self) -> None:
+        """Open the settings dialog to modify configuration."""
+        dialog = SettingsDialog(self.config, self)
+        if dialog.exec():
+            new_settings = dialog.get_settings()
+
+            # Update config object
+            for key, value in new_settings.items():
+                setattr(self.config, key, value)
+
+            # Update UI elements that depend on config
+            self.lbl_level.setText(f"N-Level: {self.config.n_level}")
+
+            # Save configuration (optional, if we want persistence across restarts)
+            # self.config.save("config.toml")
 
     def _reset_status_labels(self) -> None:
         """Reset status labels to 'Waiting' state."""

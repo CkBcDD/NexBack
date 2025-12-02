@@ -4,8 +4,12 @@ This module defines the GameConfig dataclass which holds all configurable
 parameters for the Dual N-Back training task.
 """
 
-from dataclasses import dataclass
+import tomllib
+from dataclasses import asdict, dataclass
 from enum import Enum, auto
+from pathlib import Path
+
+import tomli_w
 
 
 class ScoringMethod(Enum):
@@ -57,3 +61,43 @@ class GameConfig:
     # Clinical mode configuration
     is_clinical_mode: bool = False
     random_seed: int | None = None  # For reproducible sequences in clinical mode
+
+    def save(self, path: Path | str) -> None:
+        """Save configuration to a TOML file.
+
+        Args:
+            path: Path to the TOML file.
+        """
+        data = asdict(self)
+
+        # Convert Enum to string
+        data["scoring_method"] = self.scoring_method.name
+
+        # Remove None values (TOML doesn't support null)
+        data = {k: v for k, v in data.items() if v is not None}
+
+        with open(path, "wb") as f:
+            tomli_w.dump(data, f)
+
+    @classmethod
+    def load(cls, path: Path | str) -> "GameConfig":
+        """Load configuration from a TOML file.
+
+        Args:
+            path: Path to the TOML file.
+
+        Returns:
+            GameConfig: Loaded configuration.
+        """
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+
+        # Convert string back to Enum
+        if "scoring_method" in data:
+            try:
+                data["scoring_method"] = ScoringMethod[data["scoring_method"]]
+            except KeyError:
+                # Fallback to default if invalid enum name
+                data.pop("scoring_method")
+
+        return cls(**data)
