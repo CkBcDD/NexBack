@@ -6,4 +6,4 @@ Modules:
 
 from .config import GameConfig
 
-__all__ = [GameConfig]
+__all__ = ["GameConfig"]

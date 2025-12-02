@@ -59,17 +59,17 @@ class MainWindow(QMainWindow):
         self.storage = Storage()
         self.audio_manager = AudioManager()
 
-        # UI components will be set in _init_ui
-        self.grid: GridWidget | None = None
-        self.lbl_score: QLabel | None = None
-        self.lbl_level: QLabel | None = None
-        self.lbl_instructions: QLabel | None = None
-        self.lbl_pos_status: QLabel | None = None
-        self.lbl_audio_status: QLabel | None = None
-        self.btn_start: QPushButton | None = None
-        self.btn_stop: QPushButton | None = None
-        self.chk_clinical: QCheckBox | None = None
-        self.progress: QProgressBar | None = None
+        # UI components - initialized in _init_ui
+        self.grid: GridWidget
+        self.lbl_score: QLabel
+        self.lbl_level: QLabel
+        self.lbl_instructions: QLabel
+        self.lbl_pos_status: QLabel
+        self.lbl_audio_status: QLabel
+        self.btn_start: QPushButton
+        self.btn_stop: QPushButton
+        self.chk_clinical: QCheckBox
+        self.progress: QProgressBar
 
         # Initialize UI and connect signals
         self._init_ui()
@@ -179,8 +179,6 @@ class MainWindow(QMainWindow):
 
     def start_game(self) -> None:
         """Start a new training session."""
-        # TODO: Add an early return to prevent empty sessions
-
         self.btn_start.setEnabled(False)
         # In clinical mode, disable stop button to enforce session completion (as well as supress xxx is not a known attribute of "None")
         if self.config.is_clinical_mode:

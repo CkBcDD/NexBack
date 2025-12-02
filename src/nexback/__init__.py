@@ -9,7 +9,6 @@ Modules:
     utils: Utility functions and configuration
 """
 
-__version__ = "0.1.0"
-__author__ = "NexBack Development Team"
+from . import core, ui, utils
 
 __all__ = ["core", "ui", "utils"]

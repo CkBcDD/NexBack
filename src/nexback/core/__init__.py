@@ -6,4 +6,6 @@ Modules:
     storage: Session data persistence
 """
 
+from . import engine, audio, storage
+
 __all__ = ["engine", "audio", "storage"]

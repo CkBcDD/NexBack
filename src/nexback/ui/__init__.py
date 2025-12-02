@@ -5,4 +5,6 @@ Modules:
     grid_widget: 3x3 grid display for position stimuli
 """
 
+from . import main_window, grid_widget
+
 __all__ = ["main_window", "grid_widget"]
