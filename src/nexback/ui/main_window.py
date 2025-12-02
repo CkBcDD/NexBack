@@ -1,3 +1,11 @@
+"""Main application window for NexBack Dual N-Back trainer.
+
+This module provides the primary user interface for the training application,
+managing the game flow, user input, and result display.
+"""
+
+import random
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import (
@@ -20,31 +28,63 @@ from src.nexback.utils.config import GameConfig
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """Main application window for the NexBack Dual N-Back trainer.
+
+    Manages:
+    - Game initialization and state management
+    - UI layout and widget creation
+    - Signal connections between engine and UI
+    - User input processing
+    - Session results display and persistence
+    """
+
+    # UI element style constants
+    CELL_INACTIVE_STYLE = (
+        "background-color: #f0f0f0; border: 2px solid #ccc; border-radius: 8px;"
+    )
+    STATUS_WAITING_STYLE = "font-size: 16px; font-weight: bold; color: #888;"
+    STATUS_CORRECT_STYLE = "font-size: 16px; font-weight: bold; color: #2ecc71;"
+    STATUS_INCORRECT_STYLE = "font-size: 16px; font-weight: bold; color: #e74c3c;"
+    INSTRUCTIONS_STYLE = "font-size: 14px; color: #888;"
+
+    def __init__(self) -> None:
+        """Initialize the main window and all components."""
         super().__init__()
         self.setWindowTitle("NexBack - Dual N-Back Trainer")
         self.resize(600, 700)
 
-        # Config & Engine
+        # Initialize core components
         self.config = GameConfig()
         self.engine = NBackEngine(self.config)
         self.storage = Storage()
         self.audio_manager = AudioManager()
 
-        # UI Setup
+        # UI components will be set in _init_ui
+        self.grid: GridWidget | None = None
+        self.lbl_score: QLabel | None = None
+        self.lbl_level: QLabel | None = None
+        self.lbl_instructions: QLabel | None = None
+        self.lbl_pos_status: QLabel | None = None
+        self.lbl_audio_status: QLabel | None = None
+        self.btn_start: QPushButton | None = None
+        self.btn_stop: QPushButton | None = None
+        self.chk_clinical: QCheckBox | None = None
+        self.progress: QProgressBar | None = None
+
+        # Initialize UI and connect signals
         self._init_ui()
         self._connect_signals()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
+        """Initialize and layout all UI components."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        # Header
+        # Header with score, level, and clinical mode toggle
         header_layout = QHBoxLayout()
-        self.lbl_score = QLabel("Score: 0")
         self.lbl_level = QLabel(f"N-Level: {self.config.n_level}")
-
+        self.lbl_score = QLabel("Score: 0")
         self.chk_clinical = QCheckBox("Clinical Mode")
         self.chk_clinical.toggled.connect(self.on_clinical_toggled)
 
@@ -54,38 +94,33 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(self.lbl_score)
         layout.addLayout(header_layout)
 
-        # Grid
+        # 3x3 position stimulus grid
         self.grid = GridWidget()
         layout.addWidget(self.grid, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # Feedback Area
+        # Instructions
         self.lbl_instructions = QLabel(
             "Press 'A' for Position Match | Press 'L' for Audio Match"
         )
         self.lbl_instructions.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_instructions.setStyleSheet("font-size: 14px; color: #888;")
+        self.lbl_instructions.setStyleSheet(self.INSTRUCTIONS_STYLE)
         layout.addWidget(self.lbl_instructions)
 
-        # Status Area
+        # Status indicators for each modality
         status_layout = QHBoxLayout()
-
         self.lbl_pos_status = QLabel("Position: Waiting")
         self.lbl_pos_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_pos_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self.lbl_pos_status.setStyleSheet(self.STATUS_WAITING_STYLE)
 
         self.lbl_audio_status = QLabel("Audio: Waiting")
         self.lbl_audio_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_audio_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self.lbl_audio_status.setStyleSheet(self.STATUS_WAITING_STYLE)
 
         status_layout.addWidget(self.lbl_pos_status)
         status_layout.addWidget(self.lbl_audio_status)
         layout.addLayout(status_layout)
 
-        # Controls
+        # Control buttons
         controls_layout = QHBoxLayout()
         self.btn_start = QPushButton("Start Session")
         self.btn_stop = QPushButton("Stop")
@@ -98,112 +133,122 @@ class MainWindow(QMainWindow):
         controls_layout.addWidget(self.btn_stop)
         layout.addLayout(controls_layout)
 
-        # Progress
+        # Progress bar showing trial progress
         self.progress = QProgressBar()
         layout.addWidget(self.progress)
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
+        """Connect engine signals to UI update slots."""
         self.engine.stimulus_presented.connect(self.on_stimulus)
         self.engine.feedback_generated.connect(self.on_feedback)
         self.engine.score_updated.connect(self.on_score)
         self.engine.progress_updated.connect(self.on_progress)
         self.engine.session_finished.connect(self.on_finished)
 
-    def on_clinical_toggled(self, checked):
+    def on_clinical_toggled(self, checked: bool) -> None:
+        """Handle clinical mode toggle.
+
+        Args:
+            checked: Whether clinical mode is now enabled.
+        """
         self.config.is_clinical_mode = checked
         if checked:
             self.config.scoring_method = self.config.scoring_method.CLINICAL
-            # Set a fixed seed for reproducibility in clinical mode (demo purpose)
-            # In a real app, this might come from a pre-defined list or user ID
+            # Fixed seed for reproducibility in clinical mode
             self.config.random_seed = 42
         else:
             self.config.scoring_method = self.config.scoring_method.STANDARD
             self.config.random_seed = None
 
         # Re-initialize RNG with new seed
-        import random
-
         self.engine.rng = random.Random(self.config.random_seed)
 
-    def keyPressEvent(self, a0: QKeyEvent | None):
-        if not self.engine.is_running:
-            return
-        if a0 is None:
+    def keyPressEvent(self, event: QKeyEvent | None) -> None:
+        """Handle keyboard input for stimulus responses.
+
+        Args:
+            event: The key press event.
+        """
+        if not self.engine.is_running or event is None:
             return
 
-        if a0.key() == Qt.Key.Key_A:
+        if event.key() == Qt.Key.Key_A:
             self.engine.submit_response(StimulusType.POSITION)
-        elif a0.key() == Qt.Key.Key_L:
+        elif event.key() == Qt.Key.Key_L:
             self.engine.submit_response(StimulusType.AUDIO)
 
-    def start_game(self):
+    def start_game(self) -> None:
+        """Start a new training session."""
+        # TODO: Add an early return to prevent empty sessions
+
         self.btn_start.setEnabled(False)
-        # In Clinical Mode, we might disable the Stop button to enforce session completion
-        # But for safety/UX, we might just warn. For strict requirements:
+        # In clinical mode, disable stop button to enforce session completion (as well as supress xxx is not a known attribute of "None")
         if self.config.is_clinical_mode:
             self.btn_stop.setEnabled(False)
         else:
             self.btn_stop.setEnabled(True)
 
-        self.chk_clinical.setEnabled(False)  # Lock mode during session
+        self.chk_clinical.setEnabled(False)
 
+        # Reset UI state
         self.lbl_score.setText("Score: 0")
-        self.lbl_pos_status.setText("Position: Waiting")
-        self.lbl_pos_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
-        self.lbl_audio_status.setText("Audio: Waiting")
-        self.lbl_audio_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self._reset_status_labels()
         self.progress.setValue(0)
+
+        # Start engine session
         self.engine.start_session()
         self.grid.setFocus()
 
-    def stop_game(self):
+    def stop_game(self) -> None:
+        """Stop the current training session."""
         self.engine.stop_session()
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
-        self.chk_clinical.setEnabled(True)  # Unlock mode
+        self.chk_clinical.setEnabled(True)
 
+        # Reset UI state
         self.grid.clear()
-        self.lbl_pos_status.setText("Position: Waiting")
-        self.lbl_pos_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
-        self.lbl_audio_status.setText("Audio: Waiting")
-        self.lbl_audio_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self._reset_status_labels()
 
-    def on_stimulus(self, pos, audio_char):
-        # Reset feedback status
+    def _reset_status_labels(self) -> None:
+        """Reset status labels to 'Waiting' state."""
         self.lbl_pos_status.setText("Position: Waiting")
-        self.lbl_pos_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self.lbl_pos_status.setStyleSheet(self.STATUS_WAITING_STYLE)
         self.lbl_audio_status.setText("Audio: Waiting")
-        self.lbl_audio_status.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #888;"
-        )
+        self.lbl_audio_status.setStyleSheet(self.STATUS_WAITING_STYLE)
 
-        # Visual
+    def on_stimulus(self, pos: int, audio_char: str) -> None:
+        """Handle stimulus presentation.
+
+        Args:
+            pos: Position index (0-8) for grid highlighting.
+            audio_char: Character identifier for audio playback.
+        """
+        # Reset feedback status for new stimulus
+        self._reset_status_labels()
+
+        # Display position stimulus
         self.grid.highlight(pos)
 
-        # Audio
+        # Play audio stimulus
         self.audio_manager.play(audio_char)
 
-        # Clear grid after stimulus duration (e.g., 1000ms)
-        # The engine handles the trial timing (3000ms), but we want the visual to disappear earlier
+        # Clear visual stimulus after display duration
         QTimer.singleShot(self.config.stimulus_duration_ms, self.grid.clear)
 
-    def on_feedback(self, stim_type, response_type):
+    def on_feedback(self, stim_type: StimulusType, response_type: ResponseType) -> None:
+        """Handle feedback display for a response.
+
+        Args:
+            stim_type: The stimulus modality (Position or Audio).
+            response_type: The response classification (Hit, Miss, False Alarm, or Rejection).
+        """
         is_correct = response_type in [ResponseType.HIT, ResponseType.REJECTION]
 
         text = "Correct" if is_correct else "Incorrect"
-        # Green for correct, Red for incorrect.
-        color = "#2ecc71" if is_correct else "#e74c3c"
+        style = self.STATUS_CORRECT_STYLE if is_correct else self.STATUS_INCORRECT_STYLE
 
+        # Update appropriate status label
         label = (
             self.lbl_pos_status
             if stim_type == StimulusType.POSITION
@@ -212,16 +257,33 @@ class MainWindow(QMainWindow):
         prefix = "Position" if stim_type == StimulusType.POSITION else "Audio"
 
         label.setText(f"{prefix}: {text}")
-        label.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {color};")
+        label.setStyleSheet(style)
 
-    def on_score(self, score, total):
+    def on_score(self, score: int, total: int) -> None:
+        """Update score display.
+
+        Args:
+            score: Current score.
+            total: Total possible score (unused but included for future use).
+        """
         self.lbl_score.setText(f"Score: {score}")
 
-    def on_progress(self, current, total):
+    def on_progress(self, current: int, total: int) -> None:
+        """Update progress bar.
+
+        Args:
+            current: Current trial number.
+            total: Total trials in session.
+        """
         self.progress.setMaximum(total)
         self.progress.setValue(current)
 
-    def on_finished(self, result):
+    def on_finished(self, result: dict) -> None:
+        """Handle session completion and display results.
+
+        Args:
+            result: Dictionary containing final statistics and performance metrics.
+        """
         self.stop_game()
 
         stats = result["stats"]
@@ -230,12 +292,13 @@ class MainWindow(QMainWindow):
         demotion = result["demotion"]
         new_level = result["n_level"]
 
-        # Calculate accuracy
+        # Format results message
         pos_stats = stats[StimulusType.POSITION]
         audio_stats = stats[StimulusType.AUDIO]
 
         msg = "Session Finished!\n\n"
         msg += f"Final Score: {final_score:.2%}\n"
+
         if promotion:
             msg += f"Result: PROMOTED to N-Level {new_level}!\n\n"
         elif demotion:
@@ -254,8 +317,8 @@ class MainWindow(QMainWindow):
 
         QMessageBox.information(self, "Results", msg)
 
-        # Update level label
+        # Update UI with new level
         self.lbl_level.setText(f"N-Level: {self.config.n_level}")
 
-        # Save history
+        # Persist session results
         self.storage.save_session(result, self.config)
