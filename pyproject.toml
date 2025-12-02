@@ -4,13 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "edge-tts>=7.2.3",
-    "pyside6>=6.10.1",
-]
+dependencies = ["pyside6>=6.10.1"]
 
 [project.optional-dependencies]
-scripts = [
-    "huggingface-hub>=1.1.7",
-    "piper-tts>=1.3.0",
-]
+scripts = ["edge-tts>=7.2.3"]
