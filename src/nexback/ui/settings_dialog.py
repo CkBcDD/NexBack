@@ -3,6 +3,8 @@
 This module provides a dialog for users to modify game configuration parameters.
 """
 
+from typing import Any
+
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -13,6 +15,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QSpinBox,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.nexback.utils.config import GameConfig, ScoringMethod
@@ -24,7 +27,7 @@ class SettingsDialog(QDialog):
     Allows users to modify N-Level, timing, probabilities, and thresholds.
     """
 
-    def __init__(self, config: GameConfig, parent=None):
+    def __init__(self, config: GameConfig, parent: QWidget | None = None):
         """Initialize the settings dialog.
 
         Args:
@@ -168,7 +171,7 @@ class SettingsDialog(QDialog):
         is_enabled = state != 0
         self.spin_random_seed.setEnabled(is_enabled)
 
-    def get_settings(self) -> dict:
+    def get_settings(self) -> dict[str, Any]:
         """Retrieve the updated settings from the dialog widgets.
 
         Returns:
