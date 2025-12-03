@@ -5,6 +5,7 @@ managing the game flow, user input, and result display.
 """
 
 import random
+from typing import TypedDict
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QKeyEvent
@@ -26,6 +27,25 @@ from src.nexback.core.storage import Storage
 from src.nexback.ui.grid_widget import GridWidget
 from src.nexback.ui.settings_dialog import SettingsDialog
 from src.nexback.utils.config import GameConfig
+
+
+class StimulusStats(TypedDict):
+    """Statistics for a single stimulus modality."""
+
+    hit: int
+    miss: int
+    false_alarm: int
+    targets: int
+
+
+class SessionResult(TypedDict):
+    """Result dictionary structure from session completion."""
+
+    stats: dict[StimulusType, StimulusStats]
+    final_score: float
+    promotion: bool
+    demotion: bool
+    n_level: int
 
 
 class MainWindow(QMainWindow):
@@ -298,7 +318,7 @@ class MainWindow(QMainWindow):
         self.progress.setMaximum(total)
         self.progress.setValue(current)
 
-    def on_finished(self, result: dict) -> None:
+    def on_finished(self, result: SessionResult) -> None:
         """Handle session completion and display results.
 
         Args:
@@ -306,15 +326,15 @@ class MainWindow(QMainWindow):
         """
         self.stop_game()
 
-        stats = result["stats"]
-        final_score = result["final_score"]
-        promotion = result["promotion"]
-        demotion = result["demotion"]
-        new_level = result["n_level"]
+        stats: dict[StimulusType, StimulusStats] = result["stats"]
+        final_score: float = result["final_score"]
+        promotion: bool = result["promotion"]
+        demotion: bool = result["demotion"]
+        new_level: int = result["n_level"]
 
         # Format results message
-        pos_stats = stats[StimulusType.POSITION]
-        audio_stats = stats[StimulusType.AUDIO]
+        pos_stats: StimulusStats = stats[StimulusType.POSITION]
+        audio_stats: StimulusStats = stats[StimulusType.AUDIO]
 
         msg = "Session Finished!\n\n"
         msg += f"Final Score: {final_score:.2%}\n"

@@ -10,7 +10,7 @@ from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class Storage:
@@ -32,11 +32,12 @@ class Storage:
         self.history_file = self.storage_dir / "history.json"
         self.secure_file = self.storage_dir / "secure_history.bin"
 
-    def save_session(self, result: dict[str, Any], config: Any) -> None:
+    def save_session(self, result: dict[str, Any] | Any, config: Any) -> None:
         """Save session results to storage.
 
         Args:
             result: Session result dictionary containing stats, score, and level info.
+                    Can be a TypedDict or regular dict.
             config: Game configuration object used for the session.
         """
         # Convert config to dictionary format
@@ -112,12 +113,14 @@ class Storage:
         if isinstance(obj, Enum):
             return obj.name
         elif isinstance(obj, dict):
+            obj_dict = cast(dict[Any, Any], obj)
             return {
                 Storage._make_serializable(k): Storage._make_serializable(v)
-                for k, v in obj.items()
+                for k, v in obj_dict.items()
             }
         elif isinstance(obj, list):
-            return [Storage._make_serializable(i) for i in obj]
+            obj_list = cast(list[Any], obj)
+            return [Storage._make_serializable(i) for i in obj_list]
         else:
             return obj
 

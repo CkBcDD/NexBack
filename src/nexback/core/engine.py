@@ -224,7 +224,7 @@ class NBackEngine(QObject):
         Returns:
             Modified (position, audio) tuple.
         """
-        offsets = []
+        offsets: list[int] = []
         if n > 1:
             offsets.append(n - 1)
         if len(self.history) >= n + 1:
@@ -233,7 +233,9 @@ class NBackEngine(QObject):
         if not offsets:
             return pos, audio
 
-        interference_n = self.rng.choice(offsets)
+        interference_n: int = self.rng.choice(offsets)
+        target_pos: int
+        target_audio: str
         target_pos, target_audio = self.history[-interference_n]
         interference_type = self.rng.choice([StimulusType.POSITION, StimulusType.AUDIO])
 
